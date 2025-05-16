@@ -1,6 +1,9 @@
 package com.service;
 
+import com.protocol.Peer;
+
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 
 /**
  * 1.创建链接
@@ -8,6 +11,7 @@ import java.io.InputStream;
  * 3.关闭链接
  */
 public interface TransportClient {
+    void init(Peer peer);
     InputStream write(InputStream data);
     void close();
 }

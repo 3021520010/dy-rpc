@@ -1,5 +1,6 @@
 package com.nio;
 
+import com.protocol.Peer;
 import com.service.TransportClient;
 
 import java.io.ByteArrayInputStream;
@@ -14,36 +15,19 @@ import java.nio.channels.SocketChannel;
 
 public class NioTransportClient implements TransportClient {
 
-    private String host;
-    private int port;
-    public NioTransportClient(String host, int port) {
-        this.host = host;
-        this.port = port;
+   private Peer peer;
+    public NioTransportClient() {
+
     }
-    public SocketChannel connection(){
-        try{
-            SocketChannel clientChannel = SocketChannel.open();
-            // 2. 设置非阻塞（可选）
-            clientChannel.configureBlocking(false);
-            // 3. 异步连接服务器
-            boolean connected = clientChannel.connect(new InetSocketAddress(host, port));
-            if(!connected){
-                // 4. 等待连接完成
-                clientChannel.finishConnect();
-            }
-            return clientChannel;
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-        return null;
+    public void init(Peer peer){
+        this.peer = peer;
     }
     @Override
     public InputStream write(InputStream data) {
-
         try {
             // 建立阻塞连接
             SocketChannel sc = SocketChannel.open();
-            sc.connect(new InetSocketAddress(host, port));
+            sc.connect(new InetSocketAddress(peer.getHost(), peer.getPort()));
             sc.configureBlocking(true); // 设置为阻塞，简化逻辑
 
             // ========== 写请求 ==========

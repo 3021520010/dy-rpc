@@ -1,8 +1,8 @@
 package com.service.impl;
 
-import com.service.test;
+import com.service.Test;
 
-public class testImpl implements test {
+public class TestImpl implements Test {
     @Override
     public int add(int a, int b) {
         return a+b;

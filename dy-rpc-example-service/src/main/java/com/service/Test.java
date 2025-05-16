@@ -1,5 +1,5 @@
 package com.service;
 
-public interface test {
+public interface Test {
     int add(int a,int b);
 }

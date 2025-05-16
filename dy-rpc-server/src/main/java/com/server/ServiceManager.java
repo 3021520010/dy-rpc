@@ -3,7 +3,6 @@ package com.server;
 import com.protocol.Request;
 import com.protocol.ServiceDescriptor;
 
-import com.server.service.ServiceRegistry;
 import com.utils.ReflectionUtils;
 
 import java.lang.reflect.Method;
@@ -13,14 +12,27 @@ import java.util.concurrent.ConcurrentHashMap;
  * 管理rpc 服务，将他们注册到内存中，供客户端调用
  */
 public class ServiceManager  {
+
+    private static volatile ServiceManager instance;
+
+    private ServiceManager() {
+        services = new ConcurrentHashMap<>();
+    }
+
+    public static ServiceManager getInstance() {
+        if (instance == null) {
+            synchronized (ServiceManager.class) {
+                if (instance == null) {
+                    instance = new ServiceManager();
+                }
+            }
+        }
+        return instance;
+    }
     /**
      * 存储服务实例，
      */
     private Map<ServiceDescriptor, ServiceInstance>services;
-    public ServiceManager()
-    {
-        this.services = new ConcurrentHashMap<>();
-    }
     public <T> void register(Class<T> interfaceClass, T bean)
     {
         Method[] methods = ReflectionUtils.getPublicMethods(interfaceClass);

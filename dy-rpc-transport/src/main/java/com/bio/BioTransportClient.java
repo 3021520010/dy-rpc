@@ -1,11 +1,18 @@
 package com.bio;
 
+import com.protocol.Peer;
 import com.service.TransportClient;
 
 import java.io.*;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 
 public class BioTransportClient implements TransportClient {
+    @Override
+    public void init(Peer peer) {
+
+    }
+
     private String host;
     private int port;
     private Socket socket;

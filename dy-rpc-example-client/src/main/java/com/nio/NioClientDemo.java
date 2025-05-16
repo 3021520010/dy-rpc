@@ -1,15 +1,15 @@
 package com.nio;
 
-import com.bio.BioTransportClient;
 import com.code.json.JSONDecoder;
 import com.code.json.JSONEncoder;
 import com.code.service.Decoder;
 import com.code.service.Encoder;
+import com.protocol.Peer;
 import com.protocol.Request;
 import com.protocol.Response;
 import com.protocol.ServiceDescriptor;
 import com.service.TransportClient;
-import com.service.test;
+import com.service.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -23,10 +23,11 @@ public class NioClientDemo {
         try {
             Decoder decoder = new JSONDecoder();
             Encoder encoder = new JSONEncoder();
-            TransportClient client = new NioTransportClient("localhost", 3000);
-
+            Peer peer = new Peer("127.0.0.1", 3000);
+            TransportClient client = new NioTransportClient();
+            client.init(peer);
             Request request = new Request();
-            ServiceDescriptor serviceDescriptor = ServiceDescriptor.from(test.class, test.class.getMethod("add", int.class, int.class));
+            ServiceDescriptor serviceDescriptor = ServiceDescriptor.from(Test.class, Test.class.getMethod("add", int.class, int.class));
             request.setService(serviceDescriptor);
             Object[] arg = new Object[]{1, 2};
             request.setParameters(arg);

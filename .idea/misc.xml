@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ExternalStorageConfigurationManager" enabled="true" />
+  <component name="JUnitGeneratorProjectSettings">
+    <option name="selectedTemplateKey" value="JUnit 4" />
+  </component>
+  <component name="MavenProjectsManager">
+    <option name="originalFiles">
+      <list>
+        <option value="$PROJECT_DIR$/dy-rpc-client/pom.xml" />
+        <option value="$PROJECT_DIR$/dy-rpc-transport/pom.xml" />
+        <option value="$PROJECT_DIR$/dy-rpc-example/pom.xml" />
+        <option value="$PROJECT_DIR$/dy-rpc-example-client/pom.xml" />
+        <option value="$PROJECT_DIR$/dy-rpc-example-server/pom.xml" />
+        <option value="$PROJECT_DIR$/dy-rpc-code/pom.xml" />
+        <option value="$PROJECT_DIR$/dy-rpc-protocol/pom.xml" />
+        <option value="$PROJECT_DIR$/dy-rpc-server/pom.xml" />
+        <option value="$PROJECT_DIR$/dy-rpc-common/pom.xml" />
+        <option value="$PROJECT_DIR$/dy-rpc-example-service/pom.xml" />
+      </list>
+    </option>
+    <option name="ignoredFiles">
+      <set>
+        <option value="$PROJECT_DIR$/dy-rpc-example/pom.xml" />
+      </set>
+    </option>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_17" default="true" project-jdk-name="17" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/out" />
+  </component>
+</project>

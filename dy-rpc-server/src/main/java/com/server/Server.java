@@ -4,11 +4,10 @@ import com.code.service.Decoder;
 import com.code.service.Encoder;
 import com.protocol.Request;
 import com.protocol.Response;
-import com.server.service.ServiceRegistry;
+import com.service.ServiceRegistry;
 import com.service.RequestHandler;
 import com.service.TransportServer;
 import com.utils.ReflectionUtils;
-import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -35,19 +34,20 @@ public class Server {
         this.encoder = ReflectionUtils.newInstance(this.config.getEncoderClass());
         this.decoder = ReflectionUtils.newInstance(this.config.getDecoderClass());
         this.handler=requestHandler;
-       // this.serviceRegistry = ReflectionUtils.newInstance(this.config.getServiceManagerClass());
-        serviceManager=new ServiceManager();
         serviceInvoker=new ServiceInvoker();
+        serviceManager=ServiceManager.getInstance();
         this.net.init(this.config.getPort(), this.handler);
     }
-
+    public void setServiceRegistry(ServiceRegistry serviceRegistry) {
+        this.serviceRegistry = serviceRegistry;
+    }
     public void start() {
         this.net.start();
     }
     public <T> void register(Class<T> interfaceClass, T bean) {
         serviceManager.register(interfaceClass, bean);
         if(serviceRegistry!=null){
-            //TODO 地址不确定存什么
+            // 地址存服务器地址
             serviceRegistry.register(interfaceClass.getName(), new InetSocketAddress(config.getHost(), config.getPort()));
         }
     }
