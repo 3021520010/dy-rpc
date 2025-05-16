@@ -1,5 +1,6 @@
 package com.server;
 
+import com.annotation.RpcService;
 import com.code.service.Decoder;
 import com.code.service.Encoder;
 import com.protocol.Request;
@@ -8,7 +9,7 @@ import com.service.ServiceRegistry;
 import com.service.RequestHandler;
 import com.service.TransportServer;
 import com.utils.ReflectionUtils;
-
+import org.reflections.Reflections;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,6 +17,8 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.util.List;
+import java.util.Set;
 
 
 public class Server {
@@ -42,6 +45,24 @@ public class Server {
         this.serviceRegistry = serviceRegistry;
     }
     public void start() {
+        //TODO 可以修改
+        String basePackage = "com.service.impl";
+        Reflections reflections = new Reflections(basePackage);
+        Set<Class<?>> serviceClasses = reflections.getTypesAnnotatedWith(RpcService.class);
+        for (Class<?> implClass : serviceClasses) {
+            System.out.println("Found service implementation: " + implClass.getName());
+            RpcService annotation = implClass.getAnnotation(RpcService.class);
+            Class<?> interfaceClass = annotation.interfaceClass();
+            try {
+                Object bean = implClass.getDeclaredConstructor().newInstance(); // 实例化服务实现
+                this.register((Class) interfaceClass, bean); // 注册本地服务
+                System.out.println("Registered service: " + interfaceClass.getName());
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to register service: " + implClass.getName(), e);
+            }
+        }
+
+        // 启动网络监听
         this.net.start();
     }
     public <T> void register(Class<T> interfaceClass, T bean) {

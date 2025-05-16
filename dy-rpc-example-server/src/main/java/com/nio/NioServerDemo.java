@@ -15,8 +15,8 @@ public class NioServerDemo {
         // 启动服务端
         Server server = new Server(serverConfig);
         server.setServiceRegistry(new RedisServiceRegistry("192.168.88.132",6379));
-        server.register(Test.class,new TestImpl());
-        server.register(Test1.class,new Test1Impl());
+        //server.register(Test.class,new TestImpl());
+        //server.register(Test1.class,new Test1Impl());
 //        RequestHandler requestHandler=new NioRequestHandler();
         // server.init(3000, requestHandler);
         server.start();
