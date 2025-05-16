@@ -30,44 +30,67 @@ public class RemoteInvoker implements InvocationHandler {
         request.setService(ServiceDescriptor.from(clazzz,method));
         request.setParameters(args);
         Response response=invokeRemote(request);
-        log.error(response.toString());
         if(response==null||response.getCode()!=0){
-            throw new IllegalStateException("fail to invoke remote: "+response);
+            throw new IllegalStateException("发送请求失败"+response);
         }
         return response.getData();
     }
 
     private Response invokeRemote(Request request) {
-        Response response = new Response();
-        TransportClient client = null;
-        try {
-            client = selector.select();
-            // 写请求
-            byte[] requestBytes = encoder.encode(request);
-            // ✅ 加上4字节长度头
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            DataOutputStream dos = new DataOutputStream(bos);
-            //dos.writeInt(requestBytes.length);
-            dos.write(requestBytes);
-            dos.flush();
-            InputStream in = new ByteArrayInputStream(bos.toByteArray());
-// 调用
-            InputStream res = client.write(in);
-// 读取响应并反序列化（假设服务端也返回 Response 对象）
-            byte[] respBytes = res.readAllBytes();
-            response  = decoder.decode(respBytes, Response.class);
-            System.out.println("Client got response: " + response);
-            client.close();
-            return response;
-        } catch (IOException e) {
-            log.warn("fail to invoke remote", e);
-            response.setCode(1);
-            response.setMessage("RpcClient got error: " + e.getMessage());
-            throw new RuntimeException(e);
-        } finally {
-            if (client != null) {
-                selector.release(client);
+        Response response = null;
+
+        //TODO 可以修改次数
+        int retryCount = 3;
+
+        for (int i = 0; i < retryCount; i++) {
+            TransportClient client = null;
+            try {
+                // 每次重试都重新选择一个连接（可能是另一个服务端）
+                client = selector.select();
+
+                // 编码请求
+                byte[] requestBytes = encoder.encode(request);
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                DataOutputStream dos = new DataOutputStream(bos);
+                dos.write(requestBytes);
+                dos.flush();
+
+                InputStream in = new ByteArrayInputStream(bos.toByteArray());
+
+                // 调用远程服务
+                InputStream res = client.write(in);
+                byte[] respBytes = res.readAllBytes();
+                response = decoder.decode(respBytes, Response.class);
+
+                System.out.println("客户端接收到信息: " + response);
+
+                // 如果响应成功，则返回
+                if (response != null && response.getCode() == 0) {
+                    return response;
+                } else {
+                    System.err.println("调用失败，第 " + (i + 1) + " 次，服务端返回错误: " + response);
+                }
+
+            } catch (Exception e) {
+                System.err.println("调用失败，第 " + (i + 1) + " 次，异常: " + e.getMessage());
+                response = new Response();
+                response.setCode(1);
+                response.setMessage("RPC 调用异常: " + e.getMessage());
+
+            } finally {
+                // 不论成功失败，都释放连接
+                if (client != null) {
+                    selector.release(client);
+                }
+            }
+            // 失败后等待 1 秒
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ignored) {
             }
         }
+
+        // 多次重试仍然失败
+        return response;
     }
 }
