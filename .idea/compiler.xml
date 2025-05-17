@@ -9,6 +9,8 @@
         <module name="dy-rpc-code" />
         <module name="dy-rpc-common" />
         <module name="dy-rpc-transport" />
+        <module name="dy-rpc-spring-boot-starter" />
+        <module name="dy-rpc-spring-boot-client" />
         <module name="dy-rpc-client" />
         <module name="dy-rpc-example-server" />
         <module name="dy-rpc-example-service" />
@@ -20,5 +22,11 @@
     <bytecodeTargetLevel>
       <module name="dy-rpc-server-example" target="9" />
     </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="dy-rpc-spring-boot-client" options="-parameters" />
+      <module name="dy-rpc-spring-boot-starter" options="-parameters" />
+    </option>
   </component>
 </project>

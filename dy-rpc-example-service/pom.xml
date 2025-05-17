@@ -18,6 +18,16 @@
             <artifactId>reflections</artifactId>
             <version>0.10.2</version>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter</artifactId>-->
+<!--            <version>3.4.3</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>com.dy</groupId>-->
+<!--            <artifactId>dy-rpc-spring-boot-starter</artifactId>-->
+<!--            <version>0.0.1-SNAPSHOT</version>-->
+<!--        </dependency>-->
     </dependencies>
     <properties>
         <maven.compiler.source>17</maven.compiler.source>

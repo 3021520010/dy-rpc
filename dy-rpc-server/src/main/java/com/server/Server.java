@@ -10,6 +10,8 @@ import com.service.RequestHandler;
 import com.service.TransportServer;
 import com.utils.ReflectionUtils;
 import org.reflections.Reflections;
+import org.springframework.stereotype.Service;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,23 +47,23 @@ public class Server {
         this.serviceRegistry = serviceRegistry;
     }
     public void start() {
-        //TODO 可以修改
-        String basePackage = "com.service.impl";
-        Reflections reflections = new Reflections(basePackage);
-        Set<Class<?>> serviceClasses = reflections.getTypesAnnotatedWith(RpcService.class);
-        for (Class<?> implClass : serviceClasses) {
-            System.out.println("Found service implementation: " + implClass.getName());
-            RpcService annotation = implClass.getAnnotation(RpcService.class);
-            Class<?> interfaceClass = annotation.interfaceClass();
-            try {
-                Object bean = implClass.getDeclaredConstructor().newInstance(); // 实例化服务实现
-                this.register((Class) interfaceClass, bean); // 注册本地服务
-                System.out.println("Registered service: " + interfaceClass.getName());
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to register service: " + implClass.getName(), e);
-            }
-        }
-
+//
+//        for(String basePackage:config.getPackages()){
+//            Reflections reflections = new Reflections(basePackage);
+//            Set<Class<?>> serviceClasses = reflections.getTypesAnnotatedWith(RpcService.class);
+//            for (Class<?> implClass : serviceClasses) {
+//                System.out.println("Found service implementation: " + implClass.getName());
+//                RpcService annotation = implClass.getAnnotation(RpcService.class);
+//                Class<?> interfaceClass = annotation.interfaceClass();
+//                try {
+//                    Object bean = implClass.getDeclaredConstructor().newInstance(); // 实例化服务实现
+//                    this.register((Class) interfaceClass, bean); // 注册本地服务
+//                    System.out.println("Registered service: " + interfaceClass.getName());
+//                } catch (Exception e) {
+//                    throw new RuntimeException("Failed to register service: " + implClass.getName(), e);
+//                }
+//            }
+//        }
         // 启动网络监听
         this.net.start();
     }

@@ -2,6 +2,11 @@
 <project version="4">
   <component name="RemoteRepositoriesConfiguration">
     <remote-repository>
+      <option name="id" value="central" />
+      <option name="name" value="central" />
+      <option name="url" value="https://repo.maven.apache.org/maven2" />
+    </remote-repository>
+    <remote-repository>
       <option name="id" value="nccloud-releases" />
       <option name="name" value="nccloud-releases" />
       <option name="url" value="https://repo.yyrd.com/artifactory/nccloud-releases-mvn-local" />
@@ -27,9 +32,29 @@
       <option name="url" value="https://repo1.maven.org/maven2" />
     </remote-repository>
     <remote-repository>
+      <option name="id" value="nccloud-releases" />
+      <option name="name" value="nccloud-releases" />
+      <option name="url" value="https://maven.aliyun.com/repository/public" />
+    </remote-repository>
+    <remote-repository>
       <option name="id" value="jboss.community" />
       <option name="name" value="JBoss Community repository" />
       <option name="url" value="https://repository.jboss.org/nexus/content/repositories/public/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="central" />
+      <option name="name" value="Central Repository" />
+      <option name="url" value="https://maven.aliyun.com/repository/public" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="nccloud-snapshots" />
+      <option name="name" value="nnccloud-snapshots" />
+      <option name="url" value="https://maven.aliyun.com/repository/public" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="nccloud-all-mvn-virtual" />
+      <option name="name" value="nccloud-all-mvn-virtual" />
+      <option name="url" value="https://maven.aliyun.com/repository/public" />
     </remote-repository>
   </component>
 </project>
