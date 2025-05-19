@@ -1,2 +1,6 @@
 rpc:
-  loadbalance: round_robin
+  client:
+    loadbalance: round_robin
+#  transport:
+#    nio:
+#      port: 3001

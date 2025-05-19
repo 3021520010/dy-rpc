@@ -1,2 +1,3 @@
 rpc:
-  loadbalance: round_robin
+  client:
+    loadbalance: round_robin
