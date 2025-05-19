@@ -9,7 +9,7 @@
 // */
 //public class HashLoadBalancer implements LoadBalancer {
 //    @Override
-//    public InetSocketAddress select(List<InetSocketAddress> addresses, Request request) {
+//    public InetSocketAddress select(List<InetSocketAddress> addresses) {
 //        if (addresses == null || addresses.isEmpty()) return null;
 //
 //        String key = request

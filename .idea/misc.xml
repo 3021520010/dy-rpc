@@ -19,6 +19,7 @@
         <option value="$PROJECT_DIR$/dy-rpc-example-service/pom.xml" />
         <option value="$PROJECT_DIR$/dy-rpc-spring-boot-starter/pom.xml" />
         <option value="$PROJECT_DIR$/dy-rpc-spring-boot-client/pom.xml" />
+        <option value="$PROJECT_DIR$/dy-rpc-spring-boot-server/pom.xml" />
       </list>
     </option>
     <option name="ignoredFiles">

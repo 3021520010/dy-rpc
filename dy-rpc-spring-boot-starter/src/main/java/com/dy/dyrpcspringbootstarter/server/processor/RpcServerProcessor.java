@@ -1,4 +1,4 @@
-package com.dy.dyrpcspringbootstarter.processor;
+package com.dy.dyrpcspringbootstarter.server.processor;
 
 import com.annotation.RpcService;
 import com.server.Server;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 
 @Component
-public class RpcServiceProcessor implements ApplicationContextAware, InitializingBean {
+public class RpcServerProcessor implements ApplicationContextAware, InitializingBean {
 
     @Autowired
     private Server rpcServer;

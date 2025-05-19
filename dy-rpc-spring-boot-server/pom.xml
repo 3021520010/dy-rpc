@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.dy</groupId>
-	<artifactId>dy-rpc-spring-boot-starter</artifactId>
+	<artifactId>dy-rpc-spring-boot-server</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>dy-rpc-spring-boot-starter</name>
-	<description>dy-rpc-spring-boot-starter</description>
+	<name>dy-rpc-spring-boot-server</name>
+	<description>dy-rpc-spring-boot-server</description>
 	<url/>
 	<licenses>
 		<license/>
@@ -40,20 +40,25 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>com.my</groupId>-->
+<!--			<artifactId>dy-rpc-server</artifactId>-->
+<!--			<version>1.0-SNAPSHOT</version>-->
+<!--		</dependency>-->
+<!--		<dependency>-->
+<!--			<groupId>com.my</groupId>-->
+<!--			<artifactId>dy-rpc-common</artifactId>-->
+<!--			<version>1.0-SNAPSHOT</version>-->
+<!--		</dependency>-->
+<!--		<dependency>-->
+<!--			<groupId>org.apache.commons</groupId>-->
+<!--			<artifactId>commons-pool2</artifactId>-->
+<!--			<version>2.12.0</version> &lt;!&ndash; 推荐使用较新版本 &ndash;&gt;-->
+<!--		</dependency>-->
 		<dependency>
-			<groupId>com.my</groupId>
-			<artifactId>dy-rpc-server</artifactId>
-			<version>1.0-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>com.my</groupId>
-			<artifactId>dy-rpc-common</artifactId>
-			<version>1.0-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-pool2</artifactId>
-			<version>2.12.0</version> <!-- 推荐使用较新版本 -->
+			<groupId>com.dy</groupId>
+			<artifactId>dy-rpc-spring-boot-starter</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.my</groupId>

@@ -15,6 +15,7 @@
         <module name="dy-rpc-example-server" />
         <module name="dy-rpc-example-service" />
         <module name="dy-rpc-protocol" />
+        <module name="dy-rpc-spring-boot-server" />
         <module name="dy-rpc-server" />
         <module name="dy-rpc-example-client" />
       </profile>
@@ -26,6 +27,7 @@
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="dy-rpc-spring-boot-client" options="-parameters" />
+      <module name="dy-rpc-spring-boot-server" options="-parameters" />
       <module name="dy-rpc-spring-boot-starter" options="-parameters" />
     </option>
   </component>

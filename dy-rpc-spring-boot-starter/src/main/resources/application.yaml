@@ -1,4 +1,2 @@
 rpc:
-  server:
-    port: 3001
-    host: 192.168.1.100
+  loadbalance: round_robin

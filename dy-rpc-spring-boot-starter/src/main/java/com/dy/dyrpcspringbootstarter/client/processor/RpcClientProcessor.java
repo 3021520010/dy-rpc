@@ -1,4 +1,4 @@
-package com.dy.dyrpcspringbootclient;
+package com.dy.dyrpcspringbootstarter.client.processor;
 
 import com.annotation.RpcReference;
 import com.client.Client;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import java.lang.reflect.Field;
 
 @Component
-public class RpcServiceProcessor implements BeanPostProcessor {
+public class RpcClientProcessor implements BeanPostProcessor {
 
     @Autowired
     private Client client;

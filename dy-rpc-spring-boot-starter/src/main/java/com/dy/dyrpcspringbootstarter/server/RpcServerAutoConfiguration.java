@@ -1,4 +1,4 @@
-package com.dy.dyrpcspringbootstarter.config;
+package com.dy.dyrpcspringbootstarter.server;
 
 
 import com.registry.RedisServiceRegistry;
@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConditionalOnClass(Server.class)
 @ComponentScan(basePackages = "com.server") // 替换为实际包名
-public class RpcAutoConfiguration {
+public class RpcServerAutoConfiguration {
 
     @Bean
     public Server rpcServer() {

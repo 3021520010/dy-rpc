@@ -12,6 +12,7 @@ import com.service.ServiceRegistry;
 import com.service.TransportClient;
 import com.service.TransportSelector;
 import com.utils.ReflectionUtils;
+import lombok.Data;
 
 import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
@@ -22,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * 客户端的配置
  */
+@Data
 public class Client {
     private ClientConfig config;
     private Encoder encoder;

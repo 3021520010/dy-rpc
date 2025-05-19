@@ -40,9 +40,19 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.my</groupId>-->
+<!--            <artifactId>dy-rpc-client</artifactId>-->
+<!--            <version>1.0-SNAPSHOT</version>-->
+<!--        </dependency>-->
+        <dependency>
+            <groupId>com.dy</groupId>
+            <artifactId>dy-rpc-spring-boot-starter</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
         <dependency>
             <groupId>com.my</groupId>
-            <artifactId>dy-rpc-client</artifactId>
+            <artifactId>dy-rpc-example-service</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
