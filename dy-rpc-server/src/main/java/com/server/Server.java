@@ -3,6 +3,8 @@ package com.server;
 import com.annotation.RpcService;
 import com.code.service.Decoder;
 import com.code.service.Encoder;
+import com.connection.NIOConnectionPool;
+import com.protocol.Peer;
 import com.protocol.Request;
 import com.protocol.Response;
 import com.service.ServiceRegistry;
@@ -47,23 +49,6 @@ public class Server {
         this.serviceRegistry = serviceRegistry;
     }
     public void start() {
-//
-//        for(String basePackage:config.getPackages()){
-//            Reflections reflections = new Reflections(basePackage);
-//            Set<Class<?>> serviceClasses = reflections.getTypesAnnotatedWith(RpcService.class);
-//            for (Class<?> implClass : serviceClasses) {
-//                System.out.println("Found service implementation: " + implClass.getName());
-//                RpcService annotation = implClass.getAnnotation(RpcService.class);
-//                Class<?> interfaceClass = annotation.interfaceClass();
-//                try {
-//                    Object bean = implClass.getDeclaredConstructor().newInstance(); // 实例化服务实现
-//                    this.register((Class) interfaceClass, bean); // 注册本地服务
-//                    System.out.println("Registered service: " + interfaceClass.getName());
-//                } catch (Exception e) {
-//                    throw new RuntimeException("Failed to register service: " + implClass.getName(), e);
-//                }
-//            }
-//        }
         // 启动网络监听
         this.net.start();
     }
@@ -95,7 +80,7 @@ public class Server {
                 response.setData(ret);
             } catch (Exception e) {
                 response.setCode(1);
-                response.setMessage("RpcServer get Error:" + e.getClass().getName() + " " + e.getMessage());
+                response.setMessage("Server端执行出错" + e.getClass().getName() + " " + e.getMessage());
             } finally {
                 byte[] outBytes = encoder.encode(response);
                 try {

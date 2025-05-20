@@ -18,7 +18,7 @@ public class ServerConfig {
     private Class<? extends Encoder> encoderClass= JSONEncoder.class;
     private Class<? extends Decoder> decoderClass= JSONDecoder.class;
     private Class<? extends ServiceRegistry> ServiceRegistryClass= RedisServiceRegistry.class;
-    private String[] packages= new String[]{"com.service.impl"};
+    private int count=5;
     private int port= 3000;
     private String host= "127.0.0.1";
 

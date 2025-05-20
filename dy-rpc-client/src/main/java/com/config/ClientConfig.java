@@ -23,6 +23,6 @@ public class ClientConfig {
     private Class<? extends ServiceRegistry> serviceRegistryClass = RedisServiceRegistry.class;
     private Class<? extends TransportSelector> selectorClass = RandomTransportSelector.class;
     //  每个peer的连接数
-    private int connectCount = 1;
+    private int connectCount = 2;
     //private Class<? extends TransportSelector> selectorClass = RandomTransportSelector.class;
 }

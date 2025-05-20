@@ -3,26 +3,34 @@ package com.invoker;
 
 import com.code.service.Decoder;
 import com.code.service.Encoder;
+import com.loadbalance.LoadBalancer;
+import com.nio.NioTransportClient;
+import com.protocol.Peer;
 import com.protocol.Request;
 import com.protocol.Response;
 import com.protocol.ServiceDescriptor;
+import com.service.ServiceRegistry;
 import com.service.TransportClient;
 import com.service.TransportSelector;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 import java.lang.reflect.InvocationHandler;
+import java.net.InetSocketAddress;
+import java.util.List;
 
 @Slf4j
 public class RemoteInvoker implements InvocationHandler {
     private Class clazzz;
     private Encoder encoder;
     private Decoder decoder;
-    private TransportSelector selector;
-    public RemoteInvoker(Class clazzz,Encoder encoder,Decoder decoder,TransportSelector transportSelector){
+    private ServiceRegistry registry;
+    private LoadBalancer loadBalancer;
+    public RemoteInvoker(Class clazzz,Encoder encoder,Decoder decoder,ServiceRegistry serviceRegistry,LoadBalancer loadBalancer){
         this.decoder=decoder;
         this.encoder=encoder;
-        this.selector=transportSelector;
+        this.loadBalancer=loadBalancer;
+        this.registry=serviceRegistry;
         this.clazzz=clazzz;
     }
     public Object invoke(Object proxy, java.lang.reflect.Method method, Object[] args) throws Throwable {
@@ -46,8 +54,16 @@ public class RemoteInvoker implements InvocationHandler {
             TransportClient client = null;
             try {
                 // 每次重试都重新选择一个连接（可能是另一个服务端）
-                client = selector.select();
-
+                //获取活跃的连接
+                List<InetSocketAddress> activeAddress = registry.lookup(clazzz.getName());
+                if (activeAddress == null || activeAddress.isEmpty()) {
+                    System.err.println("没有可用的服务端地址");
+                    return null;
+                }
+                //负载均衡选择一个
+                InetSocketAddress address = loadBalancer.select(activeAddress);
+                client = new NioTransportClient();
+                client.init(new Peer(address.getHostString(), address.getPort()));
                 // 编码请求
                 byte[] requestBytes = encoder.encode(request);
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -80,7 +96,7 @@ public class RemoteInvoker implements InvocationHandler {
             } finally {
                 // 不论成功失败，都释放连接
                 if (client != null) {
-                    selector.release(client);
+                    client.close();
                 }
             }
             // 失败后等待 1 秒
