@@ -14,6 +14,7 @@ import com.service.ServiceRegistry;
 import com.service.TransportClient;
 import com.service.TransportSelector;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.Assert;
 
 import java.io.*;
 import java.lang.reflect.InvocationHandler;
@@ -32,7 +33,8 @@ public class RemoteInvoker implements InvocationHandler {
     //默认3
     int retryCount = 3;
     int retryTime=1000;
-    public RemoteInvoker(Class clazzz,Encoder encoder,Decoder decoder,ServiceRegistry serviceRegistry,LoadBalancer loadBalancer,int retryCount,int retryTime){
+    String hashKey;
+    public RemoteInvoker(Class clazzz,Encoder encoder,Decoder decoder,ServiceRegistry serviceRegistry,LoadBalancer loadBalancer,int retryCount,int retryTime,String key){
         this.decoder=decoder;
         this.encoder=encoder;
         this.loadBalancer=loadBalancer;
@@ -41,6 +43,7 @@ public class RemoteInvoker implements InvocationHandler {
         client = new NioTransportClient();
         this.retryTime=retryTime;
         this.retryCount=retryCount;
+        hashKey=key;
     }
     public Object invoke(Object proxy, java.lang.reflect.Method method, Object[] args) throws Throwable {
         Request request=new Request();
@@ -54,16 +57,15 @@ public class RemoteInvoker implements InvocationHandler {
     }
 
     private Response invokeRemote(Request request) {
-        Response response = null;
+        Response response = new Response();
+
         List<InetSocketAddress> activeAddress = registry.lookup(clazzz.getName());
-        if (activeAddress == null || activeAddress.isEmpty()) {
-            log.error("当前没有可用的服务端地址");
-            return null;
-        }
+
         for (int i = 0; i < retryCount; i++) {
             try {
+                Assert.notNull(activeAddress, "当前没有可用的服务端地址");
                 //负载均衡选择一个
-                InetSocketAddress address = loadBalancer.select(activeAddress);
+                InetSocketAddress address = loadBalancer.select(activeAddress,hashKey);
                 client.init(new Peer(address.getHostString(), address.getPort()));
                 // 编码请求
                 byte[] requestBytes = encoder.encode(request);
@@ -88,7 +90,6 @@ public class RemoteInvoker implements InvocationHandler {
 
             } catch (Exception e) {
                 log.error("调用失败，第 " + (i + 1) + " 次，异常: {}" , e.getMessage());
-                response = new Response();
                 response.setCode(1);
                 response.setMessage("RPC 调用异常: " + e.getMessage());
             }

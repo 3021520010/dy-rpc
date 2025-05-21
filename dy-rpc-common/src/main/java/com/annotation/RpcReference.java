@@ -1,5 +1,8 @@
 package com.annotation;
 
+import com.loadbalance.LoadBalancer;
+import com.loadbalance.RoundRobinLoadBalancer;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -23,4 +26,14 @@ public @interface RpcReference {
      * 重试间隔时间（毫秒），默认值为 1000
      */
     int retryTime() default 1000;
+
+    /**
+     * 一致性哈希中用户指定的 key（如 userId），可选
+     */
+    String hashKey() default "";
+
+    /**
+     * 负载均衡策略，默认使用轮询
+     */
+    Class<? extends LoadBalancer> loadBalancer() default RoundRobinLoadBalancer.class;
 }

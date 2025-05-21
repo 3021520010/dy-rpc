@@ -11,7 +11,7 @@ public class RoundRobinLoadBalancer implements LoadBalancer {
     private final AtomicInteger index = new AtomicInteger(0);
 
     @Override
-    public InetSocketAddress select(List<InetSocketAddress> addresses) {
+    public InetSocketAddress select(List<InetSocketAddress> addresses,String key) {
         if (addresses == null || addresses.isEmpty()) {
             return null;
         }
