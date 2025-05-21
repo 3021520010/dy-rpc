@@ -1,13 +1,17 @@
 package com.worker;
 
+import com.handler.RequestHandler;
 import lombok.Data;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.util.Iterator;
 import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Data
@@ -15,21 +19,22 @@ public class NioSelectorWorker implements Runnable {
     private final Selector selector;
     private final Queue<Runnable> taskQueue = new ConcurrentLinkedQueue<>();
     private final String name;
+    private RequestHandler handler;
 
-    public NioSelectorWorker(String name) {
+    public NioSelectorWorker(String name, RequestHandler handler) {
         this.name = name;
+        this.handler = handler;
         try {
             this.selector = Selector.open();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to open selector", e);
+            throw new RuntimeException("启动worker的selector失败", e);
         }
     }
 
-    public void register(SocketChannel channel, int ops, Runnable callback) {
+    public void register(SocketChannel channel, int ops) {
         taskQueue.add(() -> {
             try {
-                SelectionKey key = channel.register(selector, ops);
-                key.attach(callback);
+                channel.register(selector, ops);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -39,7 +44,7 @@ public class NioSelectorWorker implements Runnable {
 
     @Override
     public void run() {
-        System.out.println(name + " started.");
+        System.out.println(name + " 启动.");
         while (true) {
             try {
                 selector.select();
@@ -52,10 +57,9 @@ public class NioSelectorWorker implements Runnable {
                 while (keys.hasNext()) {
                     SelectionKey key = keys.next();
                     keys.remove();
-
-                    Runnable callback = (Runnable) key.attachment();
-                    if (callback != null) {
-                        callback.run();
+                    SocketChannel channel = (SocketChannel) key.channel();
+                    if (key.isReadable()) {
+                        handleRead(channel);
                     }
                 }
             } catch (IOException e) {
@@ -63,6 +67,7 @@ public class NioSelectorWorker implements Runnable {
             }
         }
     }
+
 
     public void handleRead(SocketChannel channel) {
         try {
@@ -92,11 +97,9 @@ public class NioSelectorWorker implements Runnable {
             dataBuf.flip();
             byte[] data = new byte[dataBuf.remaining()];
             dataBuf.get(data);
-
             // 模拟处理请求
             System.out.println(name + " 收到数据：" + new String(data));
-
-            // TODO: 你可以在这里调用 handler.onRequest(new ByteArrayInputStream(data), channel);
+            handler.onRequest(new ByteArrayInputStream(data), channel);
         } catch (IOException e) {
             try {
                 channel.close();

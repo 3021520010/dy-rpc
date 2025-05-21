@@ -53,10 +53,7 @@ public class Client {
     }
 
     public <T> T getProxy(Class<T> clazz) {
-        List<InetSocketAddress> addresses = serviceRegistry.lookup(clazz.getName());
-        for(InetSocketAddress address : addresses){
-            connectionPool.initConnections(new Peer(address.getHostString(), address.getPort()), config.getConnectCount());
-        }
+
         return (T) Proxy.newProxyInstance(clazz.getClassLoader(),
                 new Class[]{clazz},
                 new RemoteInvoker(clazz, encoder, decoder, serviceRegistry, loadBalancer));

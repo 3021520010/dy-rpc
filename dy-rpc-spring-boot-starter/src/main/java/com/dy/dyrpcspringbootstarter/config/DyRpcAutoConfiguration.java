@@ -10,11 +10,12 @@ import org.springframework.context.annotation.Import;
 
 @Configuration
 @Import({
-    RpcClientAutoConfiguration.class,
-    RpcServerAutoConfiguration.class,
-    RpcClientProcessor.class,
+        RpcServerAutoConfiguration.class,
+        RpcServerProcessor.class,
+        RpcClientAutoConfiguration.class,
+        RpcClientProcessor.class,
     //RPCClientProperties.class,
-    RpcServerProcessor.class,
+
     //RPCServerProperties.class,
 })
 public class DyRpcAutoConfiguration {

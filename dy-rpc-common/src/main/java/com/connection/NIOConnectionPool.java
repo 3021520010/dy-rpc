@@ -2,10 +2,12 @@ package com.connection;
 
 
 import com.protocol.Peer;
+import com.worker.BossServer;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,11 +35,13 @@ public class NIOConnectionPool {
     /**
      * 初始化连接池
      * @param peer 服务端地址
-     * @param count 每个服务端建立多少个连接
      */
-    public void initConnections(Peer peer, int count) {
+    public void initConnections(Peer peer) {
+        if(pool.containsKey(peer)){
+            return;
+        }
         LinkedBlockingQueue<SocketChannel> connections = new LinkedBlockingQueue<>();
-        for (int i = 0; i < count; i++) {
+        for (int i = 0; i < maxConnectionsPerAddress; i++) {
             try {
                 SocketChannel sc = SocketChannel.open();
                 sc.connect(new InetSocketAddress(peer.getHost(), peer.getPort()));

@@ -1,3 +1,5 @@
 rpc:
   client:
     loadbalance: round_robin
+server:
+  port: 8081

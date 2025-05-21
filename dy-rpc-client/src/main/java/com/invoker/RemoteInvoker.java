@@ -3,6 +3,7 @@ package com.invoker;
 
 import com.code.service.Decoder;
 import com.code.service.Encoder;
+import com.connection.NIOConnectionPool;
 import com.loadbalance.LoadBalancer;
 import com.nio.NioTransportClient;
 import com.protocol.Peer;
@@ -56,6 +57,7 @@ public class RemoteInvoker implements InvocationHandler {
                 // 每次重试都重新选择一个连接（可能是另一个服务端）
                 //获取活跃的连接
                 List<InetSocketAddress> activeAddress = registry.lookup(clazzz.getName());
+
                 if (activeAddress == null || activeAddress.isEmpty()) {
                     System.err.println("没有可用的服务端地址");
                     return null;
