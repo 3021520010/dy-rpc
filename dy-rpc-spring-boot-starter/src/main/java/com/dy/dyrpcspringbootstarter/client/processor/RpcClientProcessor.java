@@ -20,8 +20,11 @@ public class RpcClientProcessor implements BeanPostProcessor {
         Field[] fields = bean.getClass().getDeclaredFields();
         for (Field field : fields) {
             if (field.isAnnotationPresent(RpcReference.class)) {
-                Class<?> interfaceClass = field.getType();
-                Object proxy = client.getProxy(interfaceClass);
+                RpcReference annotation = field.getAnnotation(RpcReference.class);
+                Class<?> interfaceClass = annotation.interfaceClass();
+                int retryCount = annotation.retryCount();
+                int retryTime = annotation.retryTime();
+                Object proxy = client.getProxy(interfaceClass,retryCount,retryTime);
                 field.setAccessible(true);
                 try {
                     field.set(bean, proxy);

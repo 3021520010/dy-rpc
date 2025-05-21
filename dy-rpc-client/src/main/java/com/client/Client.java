@@ -52,11 +52,10 @@ public class Client {
         this.serviceRegistry = serviceRegistry;
     }
 
-    public <T> T getProxy(Class<T> clazz) {
-
+    public <T> T getProxy(Class<T> clazz,int retryCount, int retryTime) {
         return (T) Proxy.newProxyInstance(clazz.getClassLoader(),
                 new Class[]{clazz},
-                new RemoteInvoker(clazz, encoder, decoder, serviceRegistry, loadBalancer));
+                new RemoteInvoker(clazz, encoder, decoder, serviceRegistry, loadBalancer,retryCount,retryTime));
     }
 
 }

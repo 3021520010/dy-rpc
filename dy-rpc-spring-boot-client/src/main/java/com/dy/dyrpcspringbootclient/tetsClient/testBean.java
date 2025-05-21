@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class testBean {
-    @RpcReference(interfaceClass = Test.class)
+    @RpcReference(interfaceClass = Test.class, retryCount = 2,retryTime = 500)
     private  Test test;
 
 
