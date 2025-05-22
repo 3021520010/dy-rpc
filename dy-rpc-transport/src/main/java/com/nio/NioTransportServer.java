@@ -15,7 +15,7 @@ public class NioTransportServer implements TransportServer {
     }
     @Override
     public void start() {
-        BossServer boss = BossServer.getInstance(port, 2, handler);
+        BossServer boss = BossServer.getInstance(port, 5, handler);
         new Thread(boss).start();
     }
 

@@ -7,4 +7,5 @@ import java.nio.channels.SocketChannel;
 public interface RequestHandler {
     void onRequest(InputStream request, OutputStream response);
     void onRequest(InputStream request, SocketChannel channel);
+    byte[] onRequest(InputStream input);
 }

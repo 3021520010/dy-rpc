@@ -109,6 +109,23 @@ public class Server {
                 }
             }
         }
+
+        @Override
+        public byte[] onRequest(InputStream receive) {
+            Response response = new Response();
+            try {
+                Request request=decoder.decode(receive.readAllBytes(), Request.class);
+                ServiceInstance serviceInstance = serviceManager.lookup(request);
+                Object ret = serviceInvoker.invoke(serviceInstance, request);
+                response.setData(ret);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }finally {
+                    byte[] responseData = encoder.encode(response);
+                    return responseData;
+            }
+
+        }
     };
 
 }

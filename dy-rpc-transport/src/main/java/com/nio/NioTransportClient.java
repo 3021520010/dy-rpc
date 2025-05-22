@@ -2,15 +2,24 @@ package com.nio;
 
 import com.connection.NIOConnectionPool;
 import com.protocol.Peer;
+import com.registry.NioResponseRegistry;
+import com.registry.RpcFuture;
 import com.service.TransportClient;
+import com.worker.BossServer;
 import com.worker.NioSelectorWorker;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
+@Slf4j
 public class NioTransportClient implements TransportClient {
 
    private Peer peer;
@@ -23,6 +32,7 @@ public class NioTransportClient implements TransportClient {
         this.peer = peer;
         nioConnectionPool.initConnections(peer);
     }
+    // 阻塞式调用
     @Override
     public InputStream write(InputStream data) {
         try {
@@ -82,13 +92,20 @@ public class NioTransportClient implements TransportClient {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }finally {
-            nioConnectionPool.releaseConnection(peer,channel);
+            if (channel != null && channel.isConnected() && !channel.socket().isClosed()) {
+                log.error("开始释放连接: {}", channel);
+                nioConnectionPool.releaseConnection(peer, channel);
+            }
         }
     }
+
+
 
 
     @Override
     public void close() {
 
     }
+
+
 }

@@ -10,14 +10,17 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Data
 public class NioSelectorWorker implements Runnable {
     private final Selector selector;
     private final Queue<Runnable> taskQueue = new ConcurrentLinkedQueue<>();
+    private final Map<SocketChannel, Queue<ByteBuffer>> pendingWrites = new ConcurrentHashMap<>();
     private final String name;
     private RequestHandler handler;
 
@@ -60,7 +63,24 @@ public class NioSelectorWorker implements Runnable {
                     SocketChannel channel = (SocketChannel) key.channel();
                     if (key.isReadable()) {
                         handleRead(channel);
+                    }else if (key.isWritable()) {
+                        Queue<ByteBuffer> queue = pendingWrites.get(channel);
+                        while (queue != null && !queue.isEmpty()) {
+                            ByteBuffer buffer = queue.peek();
+                            channel.write(buffer);
+                            if (buffer.hasRemaining()) {
+                                // 没写完，下次继续写
+                                break;
+                            }
+                            queue.poll(); // 写完移除
+                        }
+
+                        // 如果已经写完所有，取消写事件监听
+                        if (queue == null || queue.isEmpty()) {
+                            key.interestOps(key.interestOps() & ~SelectionKey.OP_WRITE);
+                        }
                     }
+
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -99,11 +119,30 @@ public class NioSelectorWorker implements Runnable {
             dataBuf.get(data);
             // 模拟处理请求
             System.out.println(name + " 收到数据：" + new String(data));
-            handler.onRequest(new ByteArrayInputStream(data), channel);
+            //写回数据
+            // 新的逻辑：调用 handler 获取响应数据
+            byte[] resp = handler.onRequest(new ByteArrayInputStream(data));
+
+            // 构建响应 buffer
+            ByteBuffer respBuf = ByteBuffer.allocate(4 + resp.length);
+            respBuf.putInt(resp.length);
+            respBuf.put(resp);
+            respBuf.flip();
+            handlerWrite(channel, respBuf);
+
         } catch (IOException e) {
             try {
                 channel.close();
             } catch (IOException ignored) {}
+        }
+    }
+    public void handlerWrite(SocketChannel channel, ByteBuffer data) {
+        pendingWrites.computeIfAbsent(channel, k -> new ConcurrentLinkedQueue<>()).offer(data);
+        // 触发写事件注册（需要线程安全处理）
+        selector.wakeup(); // 唤醒 select()
+        SelectionKey key = channel.keyFor(selector);
+        if (key != null && key.isValid()) {
+            key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);
         }
     }
 }

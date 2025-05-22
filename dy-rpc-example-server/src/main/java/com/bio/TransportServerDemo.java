@@ -29,6 +29,11 @@ public class TransportServerDemo {
             public void onRequest(InputStream request, SocketChannel channel) {
 
             }
+
+            @Override
+            public byte[] onRequest(InputStream input) {
+                return new byte[0];
+            }
         };
         server.init(3000, requestHandler);
         server.start();
