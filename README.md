@@ -26,21 +26,23 @@
   - 通过注解 + 自动装配实现服务发布与消费
   - 注册中心、负载均衡策略、序列化方式等均可通过配置文件灵活切换
 
-## 🗂️项目架构
+## 📦项目架构
 
-├── dy-rpc-client # RPC 客户端实现
-├── dy-rpc-code # 通信消息结构与序列化机制
-├── dy-rpc-common # 通用工具、接口定义、负载均衡等
-├── dy-rpc-protocol # 通信协议处理
-├── dy-rpc-server # RPC 服务端实现
-├── dy-rpc-transport # 底层通信（BIO/NIO/TCP/HTTP）
 
-├── dy-rpc-example-service# 服务的共同接口模块
+📁 dy-rpc-client                 # RPC 客户端实现  
+📁 dy-rpc-code                   # 通信消息结构与序列化机制（请求/响应等）  
+📁 dy-rpc-common                 # 通用工具类、接口定义、负载均衡等核心组件  
+📁 dy-rpc-protocol               # 通信协议处理（含协议解析与封装）  
+📁 dy-rpc-server                 # RPC 服务端实现逻辑  
+📁 dy-rpc-transport              # 底层通信实现（支持 BIO / NIO / TCP / HTTP）  
 
-├── dy-rpc-spring-boot-starter # rpc库申诉启动框架，使用时引入这个即可
-├── dy-rpc-spring-boot-client # 测试rpc_client的springboot的服务
+📁 dy-rpc-example-service        # 通用服务接口定义（客户端与服务端共享）  
 
-├── dy-rpc-spring-boot-server # 测试rpc_server的springboot的服务
+📁 dy-rpc-spring-boot-starter    # Spring Boot 启动器，提供注解与自动配置支持  
+📁 dy-rpc-spring-boot-client     # 用于测试的 Spring Boot 客户端示例项目  
+📁 dy-rpc-spring-boot-server     # 用于测试的 Spring Boot 服务端示例项目  
+
+## 🔧技术栈
 
 | 分类     | 技术框架 / 工具                         |
 | -------- | --------------------------------------- |
