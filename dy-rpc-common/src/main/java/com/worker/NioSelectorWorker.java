@@ -124,6 +124,7 @@ public class NioSelectorWorker implements Runnable {
             //写回数据
             // 新的逻辑：调用 handler 获取响应数据
             byte[] resp = handler.onRequest(new ByteArrayInputStream(data));
+            System.out.println(name + " 写回数据：" + new String(resp));
             if(resp.length>1024*1024){
                 throw new RuntimeException("server写的数据过大");
             }

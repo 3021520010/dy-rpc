@@ -32,7 +32,6 @@ public class RpcServerProcessor implements ApplicationContextAware, Initializing
             RpcService annotation = implClass.getAnnotation(RpcService.class);
             Class<?> interfaceClass = annotation.interfaceClass();
             rpcServer.register((Class) interfaceClass, serviceBean);
-            System.out.println("Registered RPC service: " + interfaceClass.getName());
         }
         rpcServer.start();
     }

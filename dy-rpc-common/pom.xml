@@ -25,6 +25,29 @@
         <version>1.0-SNAPSHOT</version>
         <scope>compile</scope>
     </dependency>
+<!--    zookeeper-->
+    <!-- ZooKeeper 依赖 -->
+    <dependency>
+        <groupId>org.apache.zookeeper</groupId>
+        <artifactId>zookeeper</artifactId>
+        <version>3.8.1</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.curator</groupId>
+        <artifactId>curator-framework</artifactId>
+        <version>5.4.0</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.curator</groupId>
+        <artifactId>curator-recipes</artifactId>
+        <version>5.4.0</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.curator</groupId>
+        <artifactId>curator-framework</artifactId>
+        <version>2.12.0</version>
+    </dependency>
+
 </dependencies>
     <build>
         <plugins>

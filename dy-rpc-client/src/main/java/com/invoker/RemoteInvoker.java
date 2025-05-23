@@ -51,7 +51,8 @@ public class RemoteInvoker implements InvocationHandler {
         request.setParameters(args);
         Response response=invokeRemote(request);
         if(response==null||response.getCode()!=0){
-            throw new IllegalStateException("发送请求失败"+response);
+            response.setData(0);
+            //throw new IllegalStateException("发送请求失败"+response);
         }
         return response.getData();
     }

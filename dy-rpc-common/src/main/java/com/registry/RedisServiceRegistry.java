@@ -6,7 +6,9 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -37,8 +39,8 @@ public class RedisServiceRegistry implements ServiceRegistry {
         try (Jedis jedis = jedisPool.getResource()) {
             String key = KEY_PREFIX + serviceName;
             String value = address.getHostString() + ":" + address.getPort();
+            log.info("Registered service: " + serviceName + " at " + value);
             jedis.hset(key, value, String.valueOf(System.currentTimeMillis()));
-            
             // 启动心跳
             startHeartbeat(serviceName, address);
         } catch (Exception e) {
@@ -99,6 +101,8 @@ public class RedisServiceRegistry implements ServiceRegistry {
             }
         }, 0, HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
     }
+
+
 
     public void close() {
         scheduler.shutdown();

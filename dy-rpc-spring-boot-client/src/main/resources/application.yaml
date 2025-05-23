@@ -4,5 +4,7 @@ rpc:
   transport:
     nio:
       port: 3001
+  registry:
+    type: zookeeper
 server:
   port: 8082

@@ -33,7 +33,8 @@ public class RPCProperties {
 
     @Data
     public static class Zookeeper {
-        private String address;
+        private String host="192.168.88.132";
+        private int port=2181;
     }
 
     @Data

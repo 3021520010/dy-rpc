@@ -1,5 +1,7 @@
 rpc:
   client:
     loadbalance: round_robin
+  registry:
+    type: zookeeper
 server:
   port: 8081

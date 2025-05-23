@@ -117,6 +117,7 @@ public class Server {
                 Request request=decoder.decode(receive.readAllBytes(), Request.class);
                 ServiceInstance serviceInstance = serviceManager.lookup(request);
                 Object ret = serviceInvoker.invoke(serviceInstance, request);
+
                 response.setData(ret);
             } catch (IOException e) {
                 e.printStackTrace();

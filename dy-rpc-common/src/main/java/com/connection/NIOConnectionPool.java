@@ -19,7 +19,7 @@ public class NIOConnectionPool {
 
     private final Map<Peer, LinkedBlockingQueue<PooledConnection>> pool = new ConcurrentHashMap<>();
     private final Map<Peer, AtomicInteger> connectionCounts = new ConcurrentHashMap<>();
-    private final int maxConnectionsPerAddress = 5;
+    private final int maxConnectionsPerAddress = 10;
     private static volatile NIOConnectionPool instance = null;
 
     public static NIOConnectionPool getNIOConnectionPool(){
@@ -106,8 +106,8 @@ public class NIOConnectionPool {
                 }
             }
         }
-
-        throw new RuntimeException("获取连接失败: 无可用连接，且连接数已达上限");
+        return null;
+        //throw new RuntimeException("获取连接失败: 无可用连接，且连接数已达上限");
     }
 
     public void releaseConnection(Peer peer, SocketChannel channel) {
@@ -143,7 +143,7 @@ public class NIOConnectionPool {
         connectionCounts.clear();
     }
 }
- class PooledConnection {
+class PooledConnection {
     private final SocketChannel channel;
     private final AtomicBoolean inUse = new AtomicBoolean(false);
 

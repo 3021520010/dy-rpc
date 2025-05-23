@@ -37,6 +37,9 @@ public class NioTransportClient implements TransportClient {
     public InputStream write(InputStream data) {
         try {
             channel=nioConnectionPool.getConnection(peer);
+            if(channel==null){
+                throw new RuntimeException("获取channel失败，目前没有可用的channel");
+            }
             // 1. 先将输入流内容读取为byte[]
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             data.transferTo(bos);

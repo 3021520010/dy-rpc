@@ -8,6 +8,7 @@ import com.dy.dyrpcspringbootstarter.properties.RPCProperties;
 import com.loadbalance.LoadBalancer;
 import com.loadbalance.RoundRobinLoadBalancer;
 import com.registry.RedisServiceRegistry;
+import com.registry.ZookeeperServiceRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -29,7 +30,11 @@ public class RpcClientAutoConfiguration {
             LoadBalancer lb = LoadBalancerFactory.getByName(loadbalance.getClassName());
             client.setLoadBalancer(lb);
         }
-        client.setServiceRegistry(new RedisServiceRegistry(rpcProperties.getRegistry().getRedis().getHost(), rpcProperties.getRegistry().getRedis().getPort()));
+        if(rpcProperties.getRegistry().getType().equals("redis")){
+            client.setServiceRegistry(new RedisServiceRegistry(rpcProperties.getRegistry().getRedis().getHost(), rpcProperties.getRegistry().getRedis().getPort()));
+        }else{
+            client.setServiceRegistry(new ZookeeperServiceRegistry(rpcProperties.getRegistry().getZookeeper().getHost(), rpcProperties.getRegistry().getZookeeper().getPort()));
+        }
         return client;
     }
 }
