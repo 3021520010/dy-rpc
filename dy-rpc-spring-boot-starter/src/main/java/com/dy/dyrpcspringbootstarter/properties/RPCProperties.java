@@ -28,7 +28,7 @@ public class RPCProperties {
 
     private Registry registry=new Registry();
     private Transport transport=new Transport();
-    private TransportCodeType transportCodeType = TransportCodeType.KYRO;
+    private TransportCodeType transportCodeType = TransportCodeType.JSON;
 
 
 

@@ -11,14 +11,16 @@ import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class RpcClientProcessor implements BeanPostProcessor {
 
     @Autowired
     private Client client;
-
+    private final Map<String, Object> proxyCache = new ConcurrentHashMap<>();
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
         Field[] fields = bean.getClass().getDeclaredFields();
@@ -29,12 +31,25 @@ public class RpcClientProcessor implements BeanPostProcessor {
                 int retryCount = annotation.retryCount();
                 int retryTime = annotation.retryTime();
                 String key = annotation.hashKey();
-                if (!"".equals(key)) {
-                    key=UUID.randomUUID().toString();
+
+                // 修复逻辑：只有在 key 为空时才随机生成
+                if ("".equals(key)) {
+                    key = UUID.randomUUID().toString();
                 }
+
                 Class<? extends LoadBalancer> loadBalancerClass = annotation.loadBalancer();
-                LoadBalancer loadBalancer= ReflectionUtils.newInstance(loadBalancerClass);
-                Object proxy= client.getProxy(interfaceClass,retryCount,retryTime,loadBalancer,key);
+                LoadBalancer loadBalancer = ReflectionUtils.newInstance(loadBalancerClass);
+
+                // 构造缓存 Key，可加入 interfaceName + key/version/group 等
+                String proxyKey = interfaceClass.getName() + "#" + key;
+
+                // 从缓存获取或创建新代理
+                Object proxy=null;
+                if(proxyCache.containsKey(proxyKey)){
+                    proxy=proxyCache.get(proxyKey);
+                }else{
+                    proxy=client.getProxy(interfaceClass, retryCount, retryTime, loadBalancer, key);
+                }
                 field.setAccessible(true);
                 try {
                     field.set(bean, proxy);
