@@ -1,6 +1,11 @@
 package com.dy.dyrpcspringbootstarter.server;
 
 
+import com.code.enums.TransportCodeType;
+import com.code.json.JSONDecoder;
+import com.code.json.JSONEncoder;
+import com.code.service.Decoder;
+import com.code.service.Encoder;
 import com.dy.dyrpcspringbootstarter.properties.RPCProperties;
 import com.dy.dyrpcspringbootstarter.server.config.RPCServerProperties;
 import com.registry.RedisServiceRegistry;
@@ -24,6 +29,9 @@ public class RpcServerAutoConfiguration {
         RPCServerProperties properties=rpcProperties.getServer();
         ServerConfig config = new ServerConfig();
         config.setPort(rpcProperties.getTransport().getNio().getPort());
+        TransportCodeType transportCodeType = rpcProperties.getTransportCodeType();
+        config.setEncoderClass(transportCodeType.getEncoderInstance());
+        config.setDecoderClass(transportCodeType.getDecoderInstance());
         Server server = new Server(config);
         if(rpcProperties.getRegistry().getType().equals("redis")){
             server.setServiceRegistry(new RedisServiceRegistry(rpcProperties.getRegistry().getRedis().getHost(), rpcProperties.getRegistry().getRedis().getPort()));

@@ -5,6 +5,6 @@ rpc:
     nio:
       port: 3001
   registry:
-    type: zookeeper
+    type: redis
 server:
   port: 8082

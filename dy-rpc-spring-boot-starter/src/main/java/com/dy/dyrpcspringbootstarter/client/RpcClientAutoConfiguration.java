@@ -1,6 +1,7 @@
 package com.dy.dyrpcspringbootstarter.client;
 
 import com.client.Client;
+import com.code.enums.TransportCodeType;
 import com.config.ClientConfig;
 import com.dy.dyrpcspringbootstarter.client.properties.RPCClientProperties;
 import com.dy.dyrpcspringbootstarter.factory.LoadBalancerFactory;
@@ -24,6 +25,9 @@ public class RpcClientAutoConfiguration {
     public Client rpcClient(RPCProperties rpcProperties) {
         RPCClientProperties properties=rpcProperties.getClient();
         ClientConfig config = new ClientConfig();
+        TransportCodeType transportCodeType = rpcProperties.getTransportCodeType();
+        config.setEncoderClass(transportCodeType.getEncoderInstance());
+        config.setDecoderClass(transportCodeType.getDecoderInstance());
         Client client = new Client(config);
         if(properties.getLoadbalance()!=null){
             RPCClientProperties.LoadBalanceType loadbalance = properties.getLoadbalance();

@@ -2,6 +2,6 @@ rpc:
   client:
     loadbalance: round_robin
   registry:
-    type: zookeeper
+    type: redis
 server:
   port: 8081

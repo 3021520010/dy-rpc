@@ -27,6 +27,7 @@ public class ZookeeperServiceRegistry implements ServiceRegistry {
                 .retryPolicy(new ExponentialBackoffRetry(1000, 3))
                 .build();
         client.start();
+        log.info("zookeeper连接建立成功");
     }
 
     /**

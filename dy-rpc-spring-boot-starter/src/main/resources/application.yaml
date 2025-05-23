@@ -1,0 +1,2 @@
+rpc:
+  transport-code-type: hessian
