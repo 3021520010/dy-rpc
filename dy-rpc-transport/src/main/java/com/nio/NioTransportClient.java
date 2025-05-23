@@ -41,7 +41,9 @@ public class NioTransportClient implements TransportClient {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             data.transferTo(bos);
             byte[] body = bos.toByteArray();
-
+            if(body.length>1024*1024){
+                throw new RuntimeException("client发送数据过大");
+            }
             // 2. 构造写入缓冲区（4字节长度+数据）
             ByteBuffer writeBuffer = ByteBuffer.allocate(4 + body.length);
             writeBuffer.putInt(body.length);
@@ -70,7 +72,9 @@ public class NioTransportClient implements TransportClient {
             }
             lenBuffer.flip();
             int respLen = lenBuffer.getInt();
-
+            if(respLen>1024*1024){
+                throw new RuntimeException("client接收数据过大");
+            }
             // 5. 读取响应数据
             ByteBuffer respBuffer = ByteBuffer.allocate(respLen);
             while (respBuffer.hasRemaining()) {

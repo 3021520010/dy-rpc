@@ -105,7 +105,9 @@ public class NioSelectorWorker implements Runnable {
             }
             lenBuf.flip();
             int dataLen = lenBuf.getInt();
-
+            if(dataLen>1024*1024){
+                throw new RuntimeException("server读的数据过大");
+            }
             ByteBuffer dataBuf = ByteBuffer.allocate(dataLen);
             while (dataBuf.hasRemaining()) {
                 if (channel.read(dataBuf) == -1) {
@@ -122,7 +124,9 @@ public class NioSelectorWorker implements Runnable {
             //写回数据
             // 新的逻辑：调用 handler 获取响应数据
             byte[] resp = handler.onRequest(new ByteArrayInputStream(data));
-
+            if(resp.length>1024*1024){
+                throw new RuntimeException("server写的数据过大");
+            }
             // 构建响应 buffer
             ByteBuffer respBuf = ByteBuffer.allocate(4 + resp.length);
             respBuf.putInt(resp.length);

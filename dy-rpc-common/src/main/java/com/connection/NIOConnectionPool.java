@@ -2,6 +2,7 @@ package com.connection;
 
 import com.protocol.Peer;
 import lombok.extern.slf4j.Slf4j;
+import lombok.var;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -10,18 +11,16 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 public class NIOConnectionPool {
-    private final Map<Peer, LinkedBlockingQueue<SocketChannel>> pool = new ConcurrentHashMap<>();
+
+    private final Map<Peer, LinkedBlockingQueue<PooledConnection>> pool = new ConcurrentHashMap<>();
     private final Map<Peer, AtomicInteger> connectionCounts = new ConcurrentHashMap<>();
-    private static volatile NIOConnectionPool instance = null;
-
-    // 最大连接数
     private final int maxConnectionsPerAddress = 5;
-
-    private NIOConnectionPool(){}
+    private static volatile NIOConnectionPool instance = null;
 
     public static NIOConnectionPool getNIOConnectionPool(){
         if(instance == null) {
@@ -34,29 +33,22 @@ public class NIOConnectionPool {
         return instance;
     }
 
-    /**
-     * 初始化连接池
-     */
     public void initConnections(Peer peer) {
         pool.putIfAbsent(peer, new LinkedBlockingQueue<>());
         connectionCounts.putIfAbsent(peer, new AtomicInteger(0));
 
-        LinkedBlockingQueue<SocketChannel> connections = pool.get(peer);
-        AtomicInteger count = connectionCounts.get(peer);
+        var connections = pool.get(peer);
+        var count = connectionCounts.get(peer);
 
-        // 创建初始连接数，直到 maxConnectionsPerAddress
         while (count.get() < maxConnectionsPerAddress) {
             SocketChannel sc = createConnection(peer);
             if (sc != null) {
-                connections.offer(sc);
+                connections.offer(new PooledConnection(sc));
                 count.incrementAndGet();
             }
         }
     }
 
-    /**
-     * 创建连接
-     */
     private SocketChannel createConnection(Peer peer) {
         try {
             SocketChannel sc = SocketChannel.open();
@@ -65,7 +57,7 @@ public class NIOConnectionPool {
             while (!sc.finishConnect()) {
                 Thread.yield();
             }
-            log.info("创建连接成功 {}",sc);
+            log.info("创建连接成功 {}", sc);
             return sc;
         } catch (IOException e) {
             log.error("建立连接失败 {}", peer, e);
@@ -77,71 +69,71 @@ public class NIOConnectionPool {
         pool.putIfAbsent(peer, new LinkedBlockingQueue<>());
         connectionCounts.putIfAbsent(peer, new AtomicInteger(0));
 
-        LinkedBlockingQueue<SocketChannel> connections = pool.get(peer);
+        LinkedBlockingQueue<PooledConnection> connections = pool.get(peer);
         AtomicInteger count = connectionCounts.get(peer);
 
-        // 先尝试从池里获取连接，等待最多5秒
-        SocketChannel channel = connections.poll(5, TimeUnit.SECONDS);
-        if (channel != null && channel.isConnected() && channel.isOpen()) {
-            return channel;
+        PooledConnection usableConn = null;
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
+
+        while (System.nanoTime() < deadline) {
+            PooledConnection conn = connections.poll(100, TimeUnit.MILLISECONDS);
+            if (conn != null && conn.isValid()) {
+                if (conn.tryUse()) {
+                    usableConn = conn;
+                    break;
+                } else {
+                    // 正在使用中，放回池子尾部
+                    connections.offer(conn);
+                }
+            }
         }
 
-        // 如果获取失败且连接数未达到最大，尝试创建新连接
+        if (usableConn != null) {
+            return usableConn.getChannel();
+        }
+
+        // 还能创建新连接
         if (count.get() < maxConnectionsPerAddress) {
             synchronized (count) {
                 if (count.get() < maxConnectionsPerAddress) {
-                    SocketChannel newChannel = createConnection(peer);
-                    if (newChannel != null) {
+                    SocketChannel sc = createConnection(peer);
+                    if (sc != null) {
+                        PooledConnection newConn = new PooledConnection(sc);
+                        newConn.tryUse(); // 标记为使用中
                         count.incrementAndGet();
-                        return newChannel;
+                        return newConn.getChannel();
                     }
                 }
             }
         }
 
-        // 等待池中连接再次尝试获取（可选，避免立刻失败）
-        channel = connections.poll(5, TimeUnit.SECONDS);
-        if (channel != null && channel.isConnected() && channel.isOpen()) {
-            return channel;
-        }
-
-        throw new RuntimeException("获取连接失败，没有可用的channel: " + peer);
+        throw new RuntimeException("获取连接失败: 无可用连接，且连接数已达上限");
     }
 
     public void releaseConnection(Peer peer, SocketChannel channel) {
-        if (channel != null && channel.isConnected() && channel.isOpen()) {
-            LinkedBlockingQueue<SocketChannel> connections = pool.get(peer);
-            AtomicInteger count = connectionCounts.get(peer);
-            if (connections != null && count != null) {
-                // 限制连接池大小，超过则关闭连接释放资源
-                if (connections.size() >= maxConnectionsPerAddress) {
-                    try {
-                        channel.close();
-                        count.decrementAndGet();
-                        log.info("连接池已满，关闭多余连接 {}", channel);
-                    } catch (IOException e) {
-                        log.warn("关闭连接异常", e);
-                    }
-                } else {
-                    connections.offer(channel);
-                }
+        if (channel == null || !channel.isConnected()) return;
+
+        LinkedBlockingQueue<PooledConnection> connections = pool.get(peer);
+        if (connections == null) return;
+
+        for (PooledConnection conn : connections) {
+            if (conn.getChannel() == channel) {
+                conn.release();
+                return;
             }
-        } else {
-            try {
-                channel.close();
-            } catch (IOException ignored) {}
         }
+
+        // 是新建的连接，还未归还过，直接包裹后归还
+        PooledConnection conn = new PooledConnection(channel);
+        conn.release();
+        connections.offer(conn);
     }
 
-
-    /**
-     * 关闭所有连接
-     */
     public void closeAll() {
-        for (Map.Entry<Peer, LinkedBlockingQueue<SocketChannel>> entry : pool.entrySet()) {
-            for (SocketChannel sc : entry.getValue()) {
+        for (Map.Entry<Peer, LinkedBlockingQueue<PooledConnection>> entry : pool.entrySet()) {
+            for (PooledConnection conn : entry.getValue()) {
                 try {
-                    sc.close();
+                    conn.getChannel().close();
                 } catch (IOException e) {
                     log.error("关闭连接失败 {}", entry.getKey(), e);
                 }
@@ -149,5 +141,29 @@ public class NIOConnectionPool {
         }
         pool.clear();
         connectionCounts.clear();
+    }
+}
+ class PooledConnection {
+    private final SocketChannel channel;
+    private final AtomicBoolean inUse = new AtomicBoolean(false);
+
+    public PooledConnection(SocketChannel channel) {
+        this.channel = channel;
+    }
+
+    public SocketChannel getChannel() {
+        return channel;
+    }
+
+    public boolean tryUse() {
+        return inUse.compareAndSet(false, true);
+    }
+
+    public void release() {
+        inUse.set(false);
+    }
+
+    public boolean isValid() {
+        return channel != null && channel.isConnected();
     }
 }
