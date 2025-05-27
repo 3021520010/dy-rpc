@@ -24,6 +24,8 @@
     </option>
     <option name="ignoredFiles">
       <set>
+        <option value="$PROJECT_DIR$/dy-rpc-example-client/pom.xml" />
+        <option value="$PROJECT_DIR$/dy-rpc-example-server/pom.xml" />
         <option value="$PROJECT_DIR$/dy-rpc-example/pom.xml" />
       </set>
     </option>

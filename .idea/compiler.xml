@@ -12,15 +12,15 @@
         <module name="dy-rpc-spring-boot-starter" />
         <module name="dy-rpc-spring-boot-client" />
         <module name="dy-rpc-client" />
-        <module name="dy-rpc-example-server" />
         <module name="dy-rpc-example-service" />
         <module name="dy-rpc-protocol" />
         <module name="dy-rpc-spring-boot-server" />
         <module name="dy-rpc-server" />
-        <module name="dy-rpc-example-client" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="dy-rpc-example-client" target="9" />
+      <module name="dy-rpc-example-server" target="9" />
       <module name="dy-rpc-server-example" target="9" />
     </bytecodeTargetLevel>
   </component>
