@@ -107,7 +107,10 @@ public class NioTransportClient implements TransportClient {
         } catch (ExecutionException e) {
             e.printStackTrace();
         }finally {
-            nioConnectionPool.releaseConnection(peer, channel);
+            if (channel != null && channel.isConnected() && !channel.socket().isClosed()) {
+                log.error("开始释放连接: {}", channel);
+                nioConnectionPool.releaseConnection(peer, channel);
+            }
         }
         return null;
     }
@@ -143,11 +146,6 @@ public class NioTransportClient implements TransportClient {
            return future;
        }catch (Exception e){
            e.printStackTrace();
-       }finally {
-           if (channel != null && channel.isConnected() && !channel.socket().isClosed()) {
-               log.error("开始释放连接: {}", channel);
-               //nioConnectionPool.releaseConnection(peer, channel);
-           }
        }
        return null;
     }

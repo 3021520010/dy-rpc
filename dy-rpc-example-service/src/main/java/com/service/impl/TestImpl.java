@@ -11,4 +11,9 @@ public class TestImpl implements Test {
     public int add(int a, int b) {
         return a+b;
     }
+
+    @Override
+    public byte[] testBigData() {
+        return new byte[0];
+    }
 }

@@ -17,7 +17,7 @@ public class testBean {
 
     @RequestMapping("/test")
    public void test(){
-            System.out.println(test.add(1,2));
+        System.out.println(test.add(1,2));
    }
    @RequestMapping("/main/test")
     public String mainTest(){

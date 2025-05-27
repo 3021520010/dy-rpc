@@ -107,7 +107,8 @@ public class NIOConnectionPool {
         }
 
         if (usableConn != null) {
-            return usableConn.getChannel();
+            SocketChannel channel = usableConn.getChannel();
+            return channel;
         }
 
         // 还能创建新连接

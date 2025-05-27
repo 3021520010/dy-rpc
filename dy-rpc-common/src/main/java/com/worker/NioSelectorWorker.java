@@ -251,7 +251,6 @@ public class NioSelectorWorker implements Runnable {
                 context.setDataBuffer(ByteBuffer.allocate(len));
                 context.setReadingLen(false); // 转入数据读取阶段
             }
-
             ByteBuffer dataBuffer = context.getDataBuffer();
             if (channel.read(dataBuffer) == -1) {
                 channel.close();
@@ -260,6 +259,7 @@ public class NioSelectorWorker implements Runnable {
             }
 
             if (dataBuffer.hasRemaining()) {
+                log.info("还有数据");
                 return; // 继续等待
             }
 
