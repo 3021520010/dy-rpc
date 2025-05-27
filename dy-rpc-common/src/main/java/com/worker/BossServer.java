@@ -24,7 +24,7 @@ public class BossServer implements Runnable {
             throw new RuntimeException(e);
         }
         for (int i = 0; i < workerCount; i++) {
-            workers[i] = new NioSelectorWorker("Worker-" + i, handler);
+            workers[i] = new NioSelectorWorker("服务端Worker-" + i, handler);
             new Thread(workers[i]).start();
         }
     }

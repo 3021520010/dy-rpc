@@ -1,11 +1,14 @@
 package com.connection;
 
 import com.protocol.Peer;
+import com.worker.NioSelectorWorker;
 import lombok.extern.slf4j.Slf4j;
 import lombok.var;
+import org.apache.zookeeper.server.WorkerService;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,7 +23,11 @@ public class NIOConnectionPool {
     private final Map<Peer, LinkedBlockingQueue<PooledConnection>> pool = new ConcurrentHashMap<>();
     private final Map<Peer, AtomicInteger> connectionCounts = new ConcurrentHashMap<>();
     private final int maxConnectionsPerAddress = 10;
+    private final int coreConnectionsPerAddress = 2;
     private static volatile NIOConnectionPool instance = null;
+    private int workerCount = 1;
+    private NioSelectorWorker[] workers;
+    private int workerIndex = 0;
 
     public static NIOConnectionPool getNIOConnectionPool(){
         if(instance == null) {
@@ -32,6 +39,14 @@ public class NIOConnectionPool {
         }
         return instance;
     }
+    private NIOConnectionPool() {
+        workers = new NioSelectorWorker[workerCount];
+        for (int i = 0; i < workerCount; i++) {
+            workers[i] = new NioSelectorWorker("客户端worker-" + i, null);
+            Thread workerThread = new Thread(workers[i]);
+            workerThread.start();
+        }
+    }
 
     public void initConnections(Peer peer) {
         pool.putIfAbsent(peer, new LinkedBlockingQueue<>());
@@ -40,7 +55,7 @@ public class NIOConnectionPool {
         var connections = pool.get(peer);
         var count = connectionCounts.get(peer);
 
-        while (count.get() < maxConnectionsPerAddress) {
+        while (count.get() < coreConnectionsPerAddress) {
             SocketChannel sc = createConnection(peer);
             if (sc != null) {
                 connections.offer(new PooledConnection(sc));
@@ -49,7 +64,7 @@ public class NIOConnectionPool {
         }
     }
 
-    private SocketChannel createConnection(Peer peer) {
+    public SocketChannel createConnection(Peer peer) {
         try {
             SocketChannel sc = SocketChannel.open();
             sc.configureBlocking(false);
@@ -63,6 +78,9 @@ public class NIOConnectionPool {
             log.error("建立连接失败 {}", peer, e);
             return null;
         }
+    }
+    public NioSelectorWorker getWorker(){
+        return workers[workerIndex++ % workers.length];
     }
 
     public SocketChannel getConnection(Peer peer) throws Exception {

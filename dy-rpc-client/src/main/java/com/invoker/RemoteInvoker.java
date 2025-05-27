@@ -21,6 +21,7 @@ import java.lang.reflect.InvocationHandler;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 public class RemoteInvoker implements InvocationHandler {
@@ -77,6 +78,9 @@ public class RemoteInvoker implements InvocationHandler {
                 InputStream in = new ByteArrayInputStream(bos.toByteArray());
                 // 调用远程服务
                 InputStream res = client.write(in);
+//                InputStream res=null;
+//                CompletableFuture<InputStream> future = client.sendAsync(in);
+//                res=future.get();
                 byte[] respBytes = res.readAllBytes();
                 response = decoder.decode(respBytes, Response.class);
                 log.info("客户端接收到信息{}",response);

@@ -6,8 +6,14 @@ import com.service.TransportClient;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.concurrent.CompletableFuture;
 
 public class BioTransportClient implements TransportClient {
+    @Override
+    public CompletableFuture<InputStream> sendAsync(InputStream data) {
+        return null;
+    }
+
     @Override
     public void init(Peer peer) {
 
