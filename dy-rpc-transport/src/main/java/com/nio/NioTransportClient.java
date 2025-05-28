@@ -118,8 +118,11 @@ public class NioTransportClient implements TransportClient {
 
     public CompletableFuture<InputStream> sendAsync(InputStream data)  {
        try {
-           channel=nioConnectionPool.getConnection(peer);
-          // channel=nioConnectionPool.createConnection(peer);
+           //channel=nioConnectionPool.getConnection(peer);
+            channel=nioConnectionPool.getConnectionAsync(peer).get();
+            if(channel==null){
+                throw new RuntimeException("获取channel失败，目前没有可用的channel");
+            }
            channel.configureBlocking(false);
            // 1. 构造要发送的数据
            byte[] body = data.readAllBytes();
@@ -137,7 +140,7 @@ public class NioTransportClient implements TransportClient {
 
 
            // 4. 注册读回调：异步接收响应
-           worker.register(channel, SelectionKey.OP_READ, (NioSelectorWorker.ReadHandler) ch -> worker.clientRead(ch, context));
+           worker.register(channel, SelectionKey.OP_READ, ch -> worker.clientRead(ch, context));
            // 5. 写数据（触发 OP_WRITE）
            worker.writeData(channel, buffer);
 
@@ -149,6 +152,55 @@ public class NioTransportClient implements TransportClient {
        }
        return null;
     }
+
+//    /**
+//     * 测试半包现象
+//     * @param data
+//     * @return
+//     */
+//    public CompletableFuture<InputStream> sendAsync(InputStream data)  {
+//    try {
+//        channel=nioConnectionPool.getConnection(peer);
+//        // channel=nioConnectionPool.createConnection(peer);
+//        channel.configureBlocking(false);
+//        // 1. 构造要发送的数据
+//        byte[] body = data.readAllBytes();
+//        ByteBuffer fullBuffer = ByteBuffer.allocate(4 + body.length);
+//        fullBuffer.putInt(body.length);
+//        fullBuffer.put(body);
+//        fullBuffer.flip();
+//// 取出完整字节数组
+//        byte[] fullBytes = new byte[fullBuffer.remaining()];
+//        fullBuffer.get(fullBytes);
+//        // 模拟“半包发送”：只写部分数据（前 3 字节 + 剩余部分）
+//        ByteBuffer part1 = ByteBuffer.wrap(fullBytes, 0, 3); // 只写前 3 个字节
+//        ByteBuffer part2 = ByteBuffer.wrap(fullBytes, 3, fullBytes.length - 3); // 剩余部分
+//        // 2. 从连接池中获取 channel 和 selectorWorker
+//        NioSelectorWorker worker = nioConnectionPool.getWorker();
+//
+//        // 3. 创建异步 future 和 context
+//        CompletableFuture<InputStream> future = new CompletableFuture<>();
+//        ClientContext context = new ClientContext(future);
+//
+//
+//        // 4. 注册读回调：异步接收响应
+//        worker.register(channel, SelectionKey.OP_READ, (NioSelectorWorker.ReadHandler) ch -> worker.clientRead(ch, context));
+//        worker.writeData(channel, part1);
+//
+//// 模拟网络延迟或不完整写入
+//        Thread.sleep(1000);
+//
+//// 再发送剩下的部分
+//        worker.writeData(channel, part2);
+//
+//
+//        // 6. 返回 future（调用方通过 thenApply 获取结果）
+//        return future;
+//    }catch (Exception e){
+//        e.printStackTrace();
+//    }
+//    return null;
+//}
 
 
 

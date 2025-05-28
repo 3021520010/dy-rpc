@@ -21,6 +21,12 @@ public class NioSelectorWorker implements Runnable {
     private final String name;
     private final RequestHandler handler;
     private final ExecutorService executor = Executors.newFixedThreadPool(4);
+    private final Map<SocketChannel, ConnectionContext> connectionContexts = new ConcurrentHashMap<>();
+    class ConnectionContext {
+        ByteBuffer lenBuf = ByteBuffer.allocate(4);   // 固定大小的长度字段
+        ByteBuffer dataBuf = null;                    // 动态数据区，初始化为 null
+        boolean readingLen = true;                    // 当前是否正在读取长度
+    }
 
     @FunctionalInterface
     public interface ReadHandler {
@@ -112,28 +118,57 @@ public class NioSelectorWorker implements Runnable {
         }
     }
 
-    public void serverRead(SocketChannel channel) throws IOException {
-        ByteBuffer lenBuf = ByteBuffer.allocate(4);
-        if (channel.read(lenBuf) < 4) return;
-        lenBuf.flip();
-        int len = lenBuf.getInt();
-        if (len > 1024 * 1024) throw new RuntimeException("消息过大");
-        ByteBuffer dataBuf = ByteBuffer.allocate(len);
-        while (dataBuf.hasRemaining()) {
-            if (channel.read(dataBuf) == -1) throw new IOException("连接关闭");
-        }
-        dataBuf.flip();
-        byte[] data = new byte[dataBuf.remaining()];
-        dataBuf.get(data);
-        log.info("Worker [{}] 收到数据：{}", name, new String(data));
 
-        executor.execute(() -> {
-            byte[] response = handler.onRequest(new ByteArrayInputStream(data));
-            ByteBuffer respBuf = ByteBuffer.allocate(4 + response.length);
-            respBuf.putInt(response.length).put(response).flip();
-            writeData(channel, respBuf);
-        });
+
+    public void serverRead(SocketChannel channel) throws IOException {
+        ConnectionContext context= connectionContexts.computeIfAbsent(channel, k -> new ConnectionContext());
+        while (true) {
+            if (context.readingLen) {
+                int read = channel.read(context.lenBuf);
+                if (read == -1) {
+                    channel.close(); return;
+                }
+                if (context.lenBuf.hasRemaining()) {
+                    return; // 长度还没读完
+                }
+                context.lenBuf.flip();
+                int len = context.lenBuf.getInt();
+                if (len <= 0 || len > 1024 * 1024) {
+                    throw new RuntimeException("长度非法：" + len);
+                }
+                context.dataBuf = ByteBuffer.allocate(len);
+                context.readingLen = false;
+            }
+
+            int read = channel.read(context.dataBuf);
+            if (read == -1) {
+                channel.close(); return;
+            }
+            if (context.dataBuf.hasRemaining()) {
+                return; // 数据部分没读完
+            }
+
+            // 收到完整消息
+            context.dataBuf.flip();
+            byte[] data = new byte[context.dataBuf.remaining()];
+            context.dataBuf.get(data);
+
+
+            // 准备下一次读
+            context.readingLen = true;
+            context.lenBuf.clear();
+            context.dataBuf = null;
+            log.info("收到消息：{}", new String(data));
+            // 异步处理完整消息
+            executor.execute(() -> {
+                byte[] response = handler.onRequest(new ByteArrayInputStream(data));
+                ByteBuffer respBuf = ByteBuffer.allocate(4 + response.length);
+                respBuf.putInt(response.length).put(response).flip();
+                writeData(channel, respBuf);
+            });
+        }
     }
+
 
     public void defaultWrite(SocketChannel channel) throws IOException {
         Queue<ByteBuffer> queue = pendingWrites.get(channel);

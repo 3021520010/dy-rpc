@@ -14,7 +14,7 @@ public class TestImpl implements Test {
     @Override
     public int add(int a, int b) {
         try {
-            Thread.sleep(500);
+            Thread.sleep(1);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

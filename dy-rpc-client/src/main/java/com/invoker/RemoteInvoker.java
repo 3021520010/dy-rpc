@@ -46,16 +46,20 @@ public class RemoteInvoker implements InvocationHandler {
         this.retryCount=retryCount;
         hashKey=key;
     }
-    public Object invoke(Object proxy, java.lang.reflect.Method method, Object[] args) throws Throwable {
+    public Object invoke(Object proxy, java.lang.reflect.Method method, Object[] args) {
         Request request=new Request();
         request.setService(ServiceDescriptor.from(clazzz,method));
         request.setParameters(args);
-        Response response=invokeRemote(request);
-        if(response==null||response.getCode()!=0){
-            response.setData(0);
-            //throw new IllegalStateException("发送请求失败"+response);
+        try {
+            Response response=invokeRemote(request);
+            if(response==null||response.getCode()!=0){
+                //TODO 可以优化
+                throw new IllegalStateException("发送请求失败"+response);
+            }
+            return response.getData();
+        }catch (Exception e){
+            throw new RuntimeException(e);
         }
-        return response.getData();
     }
 
     private Response invokeRemote(Request request) {
@@ -78,9 +82,6 @@ public class RemoteInvoker implements InvocationHandler {
                 InputStream in = new ByteArrayInputStream(bos.toByteArray());
                 // 调用远程服务
                 InputStream res = client.write(in);
-//                InputStream res=null;
-//                CompletableFuture<InputStream> future = client.sendAsync(in);
-//                res=future.get();
                 byte[] respBytes = res.readAllBytes();
                 response = decoder.decode(respBytes, Response.class);
                 log.info("客户端接收到信息{}",response);

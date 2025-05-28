@@ -11,6 +11,7 @@ import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -22,12 +23,13 @@ public class NIOConnectionPool {
 
     private final Map<Peer, LinkedBlockingQueue<PooledConnection>> pool = new ConcurrentHashMap<>();
     private final Map<Peer, AtomicInteger> connectionCounts = new ConcurrentHashMap<>();
-    private final int maxConnectionsPerAddress = 10;
-    private final int coreConnectionsPerAddress = 2;
+    private final int maxConnectionsPerAddress = 20;
+    private final int coreConnectionsPerAddress = 5;
     private static volatile NIOConnectionPool instance = null;
-    private int workerCount = 1;
+    private int workerCount = 2;
     private NioSelectorWorker[] workers;
     private int workerIndex = 0;
+    private final Map<Peer, LinkedBlockingQueue<CompletableFuture<SocketChannel>>> waitingQueueMap = new ConcurrentHashMap<>();
 
     public static NIOConnectionPool getNIOConnectionPool(){
         if(instance == null) {
@@ -128,25 +130,105 @@ public class NIOConnectionPool {
         return null;
         //throw new RuntimeException("获取连接失败: 无可用连接，且连接数已达上限");
     }
-
-    public void releaseConnection(Peer peer, SocketChannel channel) {
-        if (channel == null || !channel.isConnected()) return;
+    public CompletableFuture<SocketChannel> getConnectionAsync(Peer peer) {
+        pool.putIfAbsent(peer, new LinkedBlockingQueue<>());
+        connectionCounts.putIfAbsent(peer, new AtomicInteger(0));
+        waitingQueueMap.putIfAbsent(peer, new LinkedBlockingQueue<>());
 
         LinkedBlockingQueue<PooledConnection> connections = pool.get(peer);
-        if (connections == null) return;
+        AtomicInteger count = connectionCounts.get(peer);
+        LinkedBlockingQueue<CompletableFuture<SocketChannel>> waitingQueue = waitingQueueMap.get(peer);
 
+        // 尝试获取空闲连接
         for (PooledConnection conn : connections) {
-            if (conn.getChannel() == channel) {
-                conn.release();
-                return;
+            if (conn.isValid() && conn.tryUse()) {
+                return CompletableFuture.completedFuture(conn.getChannel());
             }
         }
 
-        // 是新建的连接，还未归还过，直接包裹后归还
-        PooledConnection conn = new PooledConnection(channel);
-        conn.release();
-        connections.offer(conn);
+        // 可以创建新连接
+        synchronized (count) {
+            if (count.get() < maxConnectionsPerAddress) {
+                SocketChannel sc = createConnection(peer);
+                if (sc != null) {
+                    PooledConnection newConn = new PooledConnection(sc);
+                    newConn.tryUse();
+                    count.incrementAndGet();
+                    return CompletableFuture.completedFuture(sc);
+                }
+            }
+        }
+
+        // 没有空闲也不能创建，排队等待连接归还
+        CompletableFuture<SocketChannel> future = new CompletableFuture<>();
+        waitingQueue.offer(future);
+        // 在 future 超时后移除
+        future.orTimeout(300, TimeUnit.SECONDS)
+                .exceptionally(ex -> {
+                    waitingQueue.remove(future); // 防止已过期的 future 被处理
+                    return null;
+                });
+
+        return future;
     }
+
+
+//    public void releaseConnection(Peer peer, SocketChannel channel) {
+//        if (channel == null || !channel.isConnected()) return;
+//
+//        LinkedBlockingQueue<PooledConnection> connections = pool.get(peer);
+//        if (connections == null) return;
+//
+//        for (PooledConnection conn : connections) {
+//            if (conn.getChannel() == channel) {
+//                conn.release();
+//                return;
+//            }
+//        }
+//
+//        // 是新建的连接，还未归还过，直接包裹后归还
+//        PooledConnection conn = new PooledConnection(channel);
+//        conn.release();
+//        connections.offer(conn);
+//    }
+public void releaseConnection(Peer peer, SocketChannel channel) {
+    if (channel == null || !channel.isConnected()) return;
+
+    LinkedBlockingQueue<PooledConnection> connections = pool.get(peer);
+    LinkedBlockingQueue<CompletableFuture<SocketChannel>> waitingQueue = waitingQueueMap.get(peer);
+    if (connections == null) return;
+
+    for (PooledConnection conn : connections) {
+        if (conn.getChannel() == channel) {
+            conn.release();
+
+            // 看看有没有人正在等待连接
+            CompletableFuture<SocketChannel> waiter = waitingQueue != null ? waitingQueue.poll() : null;
+            if (waiter != null) {
+                if (conn.tryUse()) {
+                    waiter.complete(channel); // 分配给等待者
+                    return;
+                }
+            }
+
+            // 没有等待者，或者被别的线程抢走，就放回连接池
+            connections.offer(conn);
+            return;
+        }
+    }
+
+    // 是新建的连接
+    PooledConnection newConn = new PooledConnection(channel);
+    newConn.release();
+
+    CompletableFuture<SocketChannel> waiter = waitingQueue != null ? waitingQueue.poll() : null;
+    if (waiter != null && newConn.tryUse()) {
+        waiter.complete(channel);
+    } else {
+        connections.offer(newConn);
+    }
+}
+
 
     public void closeAll() {
         for (Map.Entry<Peer, LinkedBlockingQueue<PooledConnection>> entry : pool.entrySet()) {
